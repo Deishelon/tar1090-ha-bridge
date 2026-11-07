@@ -169,7 +169,7 @@ views:
             entity: sensor.tar1090_outline_max_altitude_24_h
             primary: >-
               {% set v = states('sensor.tar1090_outline_max_altitude_24_h') | float(none) %}
-              {{ (v | round(0)) ~ ' ft' if v is not none else '—' }}
+              {{ (v | round(0)) ~ ' m' if v is not none else '—' }}
             secondary: Highest outline, 24 h
             icon: mdi:arrow-expand-up
             icon_color: light-blue

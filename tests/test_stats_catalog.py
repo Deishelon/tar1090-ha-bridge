@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from stats_catalog import CATALOG, PollContext, bearing_degrees, format_state, haversine_km
+from stats_catalog import CATALOG, FT_TO_M, PollContext, bearing_degrees, format_state, haversine_km
 
 
 STATS = {
@@ -85,7 +85,7 @@ class StatsCatalogTest(unittest.TestCase):
         self.assertEqual(values["snr"], 16)
         self.assertEqual(values["samples_dropped_since_start"], 7)
         self.assertAlmostEqual(values["max_distance_24h"], haversine_km(0, 0, 0, 1), places=3)
-        self.assertEqual(values["outline_max_altitude_24h"], 38000)
+        self.assertAlmostEqual(values["outline_max_altitude_24h"], 38000 * FT_TO_M)
         self.assertAlmostEqual(values["closest_aircraft"], 3 * 1.852)
         self.assertEqual(values["closest_aircraft_bearing"], 90)
         self.assertTrue(all(value is not None for value in values.values()))
@@ -120,7 +120,7 @@ class StatsCatalogTest(unittest.TestCase):
         self.assertIsNone(next(s for s in CATALOG if s.component_id == "max_distance_24h").extract(ctx))
         self.assertEqual(
             next(s for s in CATALOG if s.component_id == "outline_max_altitude_24h").extract(ctx),
-            38000,
+            38000 * FT_TO_M,
         )
 
     def test_format_state_uses_precision(self):

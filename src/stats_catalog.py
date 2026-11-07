@@ -8,6 +8,8 @@ from ha_entity import HaEntity
 
 # readsb writes r_dst as nautical miles: receiver_distance / 1852.
 NMI_TO_KM = 1.852
+# Outline altitudes and aircraft alt are feet.
+FT_TO_M = 0.3048
 
 
 @dataclass
@@ -228,7 +230,7 @@ def closest_aircraft_bearing(ctx: PollContext):
     return aircraft_bearing_degrees(found, ctx)
 
 
-def outline_max_altitude_ft(ctx: PollContext):
+def outline_max_altitude_m(ctx: PollContext):
     points = outline_points(ctx)
     if points is None:
         return None
@@ -236,12 +238,14 @@ def outline_max_altitude_ft(ctx: PollContext):
     for point in points:
         if not isinstance(point, (list, tuple)) or len(point) < 3:
             continue
-        altitude = as_number(point[2])
-        if altitude is None:
+        altitude_ft = as_number(point[2])
+        if altitude_ft is None:
             continue
-        if best is None or altitude > best:
-            best = altitude
-    return best
+        if best is None or altitude_ft > best:
+            best = altitude_ft
+    if best is None:
+        return None
+    return float(best) * FT_TO_M
 
 
 @dataclass(frozen=True)
@@ -337,8 +341,9 @@ CATALOG: list[SensorDef] = [
     SensorDef(
         component_id="outline_max_altitude_24h",
         name="Outline Max Altitude (24 h)",
-        extract=outline_max_altitude_ft,
-        unit="ft",
+        extract=outline_max_altitude_m,
+        unit="m",
+        device_class=DeviceClass.DISTANCE,
         precision=0,
         icon="mdi:arrow-expand-up",
     ),
