@@ -1,0 +1,385 @@
+# Sections dashboard for the tar1090 bridge.
+# Entity ids assume the default device name "tar1090"
+# (sensor.tar1090_aircraft_ads_b, and the same pattern for the rest).
+# Needs Mushroom Cards. Paste under a dashboard's raw YAML editor.
+views:
+  - title: tar1090
+    type: sections
+    max_columns: 2
+    header: {}
+    badges:
+      - type: custom:mushroom-template-badge
+        entity: sensor.tar1090_aircraft_now
+        icon: mdi:airplane
+        color: >-
+          {% set n = states('sensor.tar1090_aircraft_now') | float(0) %}
+          {{ 'green' if n > 0 else 'blue' }}
+        label: Aircraft
+        content: "{{ states('sensor.tar1090_aircraft_now') }}"
+        tap_action:
+          action: more-info
+      - type: custom:mushroom-template-badge
+        entity: sensor.tar1090_closest_aircraft
+        icon: mdi:map-marker-radius
+        color: amber
+        label: Closest
+        content: >-
+          {% set v = states('sensor.tar1090_closest_aircraft') | float(none) %}
+          {{ (v | round(1)) ~ ' km' if v is not none else '—' }}
+        tap_action:
+          action: more-info
+      - type: custom:mushroom-template-badge
+        entity: sensor.tar1090_max_distance_24_h
+        icon: mdi:map-marker-distance
+        color: blue
+        label: Range 24h
+        content: >-
+          {% set v = states('sensor.tar1090_max_distance_24_h') | float(none) %}
+          {{ (v | round(0)) ~ ' km' if v is not none else '—' }}
+        tap_action:
+          action: more-info
+      - type: custom:mushroom-template-badge
+        entity: sensor.tar1090_messages_per_second
+        icon: mdi:speedometer
+        color: teal
+        label: Messages
+        content: >-
+          {% set v = states('sensor.tar1090_messages_per_second') | float(none) %}
+          {{ (v | round(1)) ~ '/s' if v is not none else '—' }}
+        tap_action:
+          action: more-info
+      - type: custom:mushroom-template-badge
+        entity: sensor.tar1090_receiver_uptime
+        icon: mdi:timer-outline
+        color: indigo
+        label: Uptime
+        content: >-
+          {% set s = states('sensor.tar1090_receiver_uptime') | float(none) %}
+          {% if s is none %}—{% else %}
+            {% set d = (s // 86400) | int %}
+            {% set h = ((s % 86400) // 3600) | int %}
+            {% set m = ((s % 3600) // 60) | int %}
+            {% if d > 0 %}{{ d }}d {{ h }}h{% else %}{{ h }}h {{ m }}m{% endif %}
+          {% endif %}
+        tap_action:
+          action: more-info
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Now
+            subtitle: Aircraft in view
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_aircraft_now
+            primary: "{{ states('sensor.tar1090_aircraft_now') }}"
+            secondary: Aircraft now
+            icon: mdi:airplane
+            icon_color: green
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_aircraft_with_position
+            primary: "{{ states('sensor.tar1090_aircraft_with_position') }}"
+            secondary: With position
+            icon: mdi:airplane-marker
+            icon_color: green
+            tap_action:
+              action: more-info
+            grid_options:
+              columns: 6
+              rows: 1
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_aircraft_without_position
+            primary: "{{ states('sensor.tar1090_aircraft_without_position') }}"
+            secondary: No position
+            icon: mdi:airplane-off
+            icon_color: blue
+            tap_action:
+              action: more-info
+            grid_options:
+              columns: 6
+              rows: 1
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_aircraft_ads_b
+            primary: "{{ states('sensor.tar1090_aircraft_ads_b') }}"
+            secondary: ADS-B
+            icon: mdi:airplane
+            icon_color: indigo
+            tap_action:
+              action: more-info
+            grid_options:
+              columns: 6
+              rows: 1
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_aircraft_other_types
+            primary: "{{ states('sensor.tar1090_aircraft_other_types') }}"
+            secondary: Other types
+            icon: mdi:airplane-alert
+            icon_color: purple
+            tap_action:
+              action: more-info
+            grid_options:
+              columns: 6
+              rows: 1
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_closest_aircraft
+            primary: >-
+              {% set v = states('sensor.tar1090_closest_aircraft') | float(none) %}
+              {{ (v | round(1)) ~ ' km' if v is not none else '—' }}
+            secondary: Closest
+            icon: mdi:map-marker-radius
+            icon_color: amber
+            tap_action:
+              action: more-info
+            grid_options:
+              columns: 6
+              rows: 1
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_closest_aircraft_bearing
+            primary: >-
+              {% set b = states('sensor.tar1090_closest_aircraft_bearing') | float(none) %}
+              {% if b is none %}—{% else %}
+                {% set dirs = ['N','NE','E','SE','S','SW','W','NW'] %}
+                {{ dirs[((b + 22.5) / 45) | int % 8] }} {{ b | round(0) }}°
+              {% endif %}
+            secondary: Bearing
+            icon: mdi:compass
+            icon_color: amber
+            tap_action:
+              action: more-info
+            grid_options:
+              columns: 6
+              rows: 1
+
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Range
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_max_distance_24_h
+            primary: >-
+              {% set v = states('sensor.tar1090_max_distance_24_h') | float(none) %}
+              {{ (v | round(0)) ~ ' km' if v is not none else '—' }}
+            secondary: Farthest, 24 h
+            icon: mdi:map-marker-distance
+            icon_color: blue
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_outline_max_altitude_24_h
+            primary: >-
+              {% set v = states('sensor.tar1090_outline_max_altitude_24_h') | float(none) %}
+              {{ (v | round(0)) ~ ' ft' if v is not none else '—' }}
+            secondary: Highest outline, 24 h
+            icon: mdi:arrow-expand-up
+            icon_color: light-blue
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_max_distance_15_min
+            primary: >-
+              {% set v = states('sensor.tar1090_max_distance_15_min') | float(none) %}
+              {{ (v | round(0)) ~ ' km' if v is not none else '—' }}
+            secondary: Farthest, 15 min
+            icon: mdi:map-marker-distance
+            icon_color: cyan
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-title-card
+            title: Recent
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_aircraft_tracks_15_min
+            primary: "{{ states('sensor.tar1090_aircraft_tracks_15_min') }}"
+            secondary: Tracks, 15 min
+            icon: mdi:airplane-clock
+            icon_color: green
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_messages_per_second
+            primary: >-
+              {% set v = states('sensor.tar1090_messages_per_second') | float(none) %}
+              {{ (v | round(2)) ~ ' /s' if v is not none else '—' }}
+            secondary: Messages per second
+            icon: mdi:speedometer
+            icon_color: teal
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_messages_1_min
+            primary: "{{ states('sensor.tar1090_messages_1_min') }}"
+            secondary: Messages, 1 min
+            icon: mdi:message-text
+            icon_color: teal
+            tap_action:
+              action: more-info
+            grid_options:
+              columns: 6
+              rows: 1
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_messages_15_min
+            primary: "{{ states('sensor.tar1090_messages_15_min') }}"
+            secondary: Messages, 15 min
+            icon: mdi:message-text
+            icon_color: teal
+            tap_action:
+              action: more-info
+            grid_options:
+              columns: 6
+              rows: 1
+
+      - type: grid
+        column_span: 2
+        cards:
+          - type: history-graph
+            title: Aircraft now
+            hours_to_show: 24
+            entities:
+              - entity: sensor.tar1090_aircraft_now
+              - entity: sensor.tar1090_aircraft_with_position
+
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Since start
+            subtitle: Clears when readsb restarts
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_receiver_uptime
+            primary: >-
+              {% set s = states('sensor.tar1090_receiver_uptime') | float(none) %}
+              {% if s is none %}—{% else %}
+                {% set d = (s // 86400) | int %}
+                {% set h = ((s % 86400) // 3600) | int %}
+                {% set m = ((s % 3600) // 60) | int %}
+                {% if d > 0 %}{{ d }}d {{ h }}h {{ m }}m{% else %}{{ h }}h {{ m }}m{% endif %}
+              {% endif %}
+            secondary: Receiver uptime
+            icon: mdi:timer-outline
+            icon_color: indigo
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_aircraft_tracks_since_start
+            primary: "{{ states('sensor.tar1090_aircraft_tracks_since_start') }}"
+            secondary: Tracks
+            icon: mdi:airplane-clock
+            icon_color: green
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_messages_since_start
+            primary: "{{ states('sensor.tar1090_messages_since_start') }}"
+            secondary: Messages
+            icon: mdi:message-text
+            icon_color: teal
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_positions_since_start
+            primary: "{{ states('sensor.tar1090_positions_since_start') }}"
+            secondary: Positions
+            icon: mdi:crosshairs-gps
+            icon_color: blue
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_max_distance_since_start
+            primary: >-
+              {% set v = states('sensor.tar1090_max_distance_since_start') | float(none) %}
+              {{ (v | round(0)) ~ ' km' if v is not none else '—' }}
+            secondary: Farthest
+            icon: mdi:map-marker-distance
+            icon_color: blue
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_single_message_tracks_since_start
+            primary: "{{ states('sensor.tar1090_single_message_tracks_since_start') }}"
+            secondary: Single-message tracks
+            icon: mdi:airplane-remove
+            icon_color: grey
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_samples_dropped_since_start
+            primary: "{{ states('sensor.tar1090_samples_dropped_since_start') }}"
+            secondary: Samples dropped
+            icon: mdi:trash-can-outline
+            icon_color: red
+            tap_action:
+              action: more-info
+
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Receiver
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_signal_1_min
+            primary: >-
+              {% set v = states('sensor.tar1090_signal_1_min') | float(none) %}
+              {{ (v | round(1)) ~ ' dB' if v is not none else '—' }}
+            secondary: Signal, 1 min
+            icon: mdi:signal
+            icon_color: green
+            tap_action:
+              action: more-info
+            grid_options:
+              columns: 6
+              rows: 1
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_noise_1_min
+            primary: >-
+              {% set v = states('sensor.tar1090_noise_1_min') | float(none) %}
+              {{ (v | round(1)) ~ ' dB' if v is not none else '—' }}
+            secondary: Noise, 1 min
+            icon: mdi:waveform
+            icon_color: orange
+            tap_action:
+              action: more-info
+            grid_options:
+              columns: 6
+              rows: 1
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_signal_to_noise_1_min
+            primary: >-
+              {% set v = states('sensor.tar1090_signal_to_noise_1_min') | float(none) %}
+              {{ (v | round(1)) ~ ' dB' if v is not none else '—' }}
+            secondary: Signal to noise
+            icon: mdi:signal-variant
+            icon_color: teal
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_tuner_gain
+            primary: >-
+              {% set v = states('sensor.tar1090_tuner_gain') | float(none) %}
+              {{ (v | round(1)) ~ ' dB' if v is not none else '—' }}
+            secondary: Tuner gain
+            icon: mdi:amplifier
+            icon_color: deep-orange
+            tap_action:
+              action: more-info
+            grid_options:
+              columns: 6
+              rows: 1
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_frequency_error
+            primary: >-
+              {% set v = states('sensor.tar1090_frequency_error') | float(none) %}
+              {{ (v | round(1)) ~ ' ppm' if v is not none else '—' }}
+            secondary: Frequency error
+            icon: mdi:sine-wave
+            icon_color: purple
+            tap_action:
+              action: more-info
+            grid_options:
+              columns: 6
+              rows: 1
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_strong_signals_1_min
+            primary: "{{ states('sensor.tar1090_strong_signals_1_min') }}"
+            secondary: Strong signals, 1 min
+            icon: mdi:flash
+            icon_color: amber
+            tap_action:
+              action: more-info
