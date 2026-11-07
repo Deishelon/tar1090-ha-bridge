@@ -6,12 +6,17 @@ from ha_core import DeviceClass, StateClass
 from ha_entity import HaEntity
 
 
+# readsb writes r_dst as nautical miles: receiver_distance / 1852.
+NMI_TO_KM = 1.852
+
+
 @dataclass
 class PollContext:
     stats: dict
     outline: dict | None = None
     receiver_lat: float | None = None
     receiver_lon: float | None = None
+    aircraft: list | None = None
 
 
 def dig(data: dict, dotted: str):
@@ -150,6 +155,79 @@ def max_distance_24h(ctx: PollContext):
     return best
 
 
+def aircraft_distance_km(aircraft: dict, ctx: PollContext) -> float | None:
+    reported = as_number(aircraft.get("r_dst"))
+    if reported is not None and reported >= 0:
+        return float(reported) * NMI_TO_KM
+    if ctx.receiver_lat is None or ctx.receiver_lon is None:
+        return None
+    lat = as_number(aircraft.get("lat"))
+    lon = as_number(aircraft.get("lon"))
+    if lat is None or lon is None:
+        return None
+    return haversine_km(ctx.receiver_lat, ctx.receiver_lon, float(lat), float(lon))
+
+
+def bearing_degrees(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    d_lon = math.radians(lon2 - lon1)
+    y = math.sin(d_lon) * math.cos(phi2)
+    x = math.cos(phi1) * math.sin(phi2) - math.sin(phi1) * math.cos(phi2) * math.cos(d_lon)
+    return (math.degrees(math.atan2(y, x)) + 360.0) % 360.0
+
+
+def aircraft_bearing_degrees(aircraft: dict, ctx: PollContext) -> float | None:
+    reported = as_number(aircraft.get("r_dir"))
+    if reported is not None:
+        return float(reported) % 360.0
+    if ctx.receiver_lat is None or ctx.receiver_lon is None:
+        return None
+    lat = as_number(aircraft.get("lat"))
+    lon = as_number(aircraft.get("lon"))
+    if lat is None or lon is None:
+        return None
+    return bearing_degrees(ctx.receiver_lat, ctx.receiver_lon, float(lat), float(lon))
+
+
+def closest_positioned_aircraft(ctx: PollContext) -> dict | str | None:
+    """Nearest aircraft with a position.
+
+    None means the aircraft list was not fetched. An empty string means it was
+    fetched and no aircraft has a distance, so Home Assistant clears the value.
+    """
+    if ctx.aircraft is None:
+        return None
+    best_aircraft = None
+    best_distance = None
+    for aircraft in ctx.aircraft:
+        if not isinstance(aircraft, dict):
+            continue
+        distance = aircraft_distance_km(aircraft, ctx)
+        if distance is None:
+            continue
+        if best_distance is None or distance < best_distance:
+            best_aircraft = aircraft
+            best_distance = distance
+    if best_aircraft is None:
+        return ""
+    return best_aircraft
+
+
+def closest_aircraft_km(ctx: PollContext):
+    found = closest_positioned_aircraft(ctx)
+    if not isinstance(found, dict):
+        return found
+    return aircraft_distance_km(found, ctx)
+
+
+def closest_aircraft_bearing(ctx: PollContext):
+    found = closest_positioned_aircraft(ctx)
+    if not isinstance(found, dict):
+        return found
+    return aircraft_bearing_degrees(found, ctx)
+
+
 def outline_max_altitude_ft(ctx: PollContext):
     points = outline_points(ctx)
     if points is None:
@@ -228,6 +306,24 @@ CATALOG: list[SensorDef] = [
         name="Aircraft Other Types",
         extract=aircraft_other_types,
         icon="mdi:airplane-alert",
+    ),
+    SensorDef(
+        component_id="closest_aircraft",
+        name="Closest Aircraft",
+        extract=closest_aircraft_km,
+        unit="km",
+        device_class=DeviceClass.DISTANCE,
+        precision=1,
+        icon="mdi:map-marker-radius",
+    ),
+    SensorDef(
+        component_id="closest_aircraft_bearing",
+        name="Closest Aircraft Bearing",
+        extract=closest_aircraft_bearing,
+        unit="°",
+        state_class=StateClass.NONE,
+        precision=0,
+        icon="mdi:compass",
     ),
     SensorDef(
         component_id="max_distance_24h",

@@ -88,6 +88,21 @@ def receiver_position(receiver: dict | None) -> tuple[float | None, float | None
     return float(lat), float(lon)
 
 
+def env_coordinate(name: str, low: float, high: float) -> float | None:
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return None
+    try:
+        value = float(raw)
+    except ValueError:
+        logger.warning("%s is not a number: %s", name, raw)
+        return None
+    if not low <= value <= high:
+        logger.warning("%s is outside %.0f..%.0f: %s", name, low, high, raw)
+        return None
+    return value
+
+
 def publish_states(mqtt: MqttClient, device: HaDevice, discovery_prefix: str):
     for entity in device.entities:
         try:
@@ -138,6 +153,7 @@ async def run(argv: list[str] | None = None):
     stats_url = data_url(base_url, "stats.json")
     outline_url = data_url(base_url, "outline.json")
     receiver_url = data_url(base_url, "receiver.json")
+    aircraft_url = data_url(base_url, "aircraft.json")
     timeout = float(os.getenv("TAR1090_TIMEOUT_SEC", "10"))
     poll_interval = float(os.getenv("POLL_INTERVAL_SEC", "20"))
 
@@ -151,6 +167,8 @@ async def run(argv: list[str] | None = None):
     client_id = os.getenv("MQTT_CLIENT_ID", "tar1090-ha-bridge")
     username = os.getenv("MQTT_USERNAME") or None
     password = os.getenv("MQTT_PASSWORD") or None
+    fallback_lat = env_coordinate("TAR1090_LAT", -90, 90)
+    fallback_lon = env_coordinate("TAR1090_LON", -180, 180)
 
     try:
         mqtt = MqttClient(broker, port, client_id, username, password, will_topic=availability)
@@ -168,6 +186,7 @@ async def run(argv: list[str] | None = None):
     last_outline = None
     receiver_lat = None
     receiver_lon = None
+    origin_source = None
 
     try:
         while True:
@@ -181,17 +200,35 @@ async def run(argv: list[str] | None = None):
                     last_outline = outline
                 receiver = await fetch_optional(receiver_url, timeout, "receiver.json")
                 lat, lon = receiver_position(receiver)
+                source = origin_source
                 if lat is not None and lon is not None:
                     receiver_lat, receiver_lon = lat, lon
+                    source = "receiver.json"
+                elif receiver_lat is None and fallback_lat is not None and fallback_lon is not None:
+                    receiver_lat, receiver_lon = fallback_lat, fallback_lon
+                    source = "TAR1090_LAT/TAR1090_LON"
+                if source != origin_source and receiver_lat is not None and receiver_lon is not None:
+                    logger.info("Receiver origin from %s: %.5f, %.5f", source, receiver_lat, receiver_lon)
+                    origin_source = source
                 model = receiver_model(receiver)
                 if model:
                     device.model = model
+
+                aircraft_payload = await fetch_optional(aircraft_url, timeout, "aircraft.json")
+                aircraft = None
+                if isinstance(aircraft_payload, dict):
+                    raw_aircraft = aircraft_payload.get("aircraft")
+                    if isinstance(raw_aircraft, list):
+                        aircraft = raw_aircraft
+                    else:
+                        logger.warning("aircraft.json did not contain an aircraft list")
 
                 context = PollContext(
                     stats=stats,
                     outline=last_outline,
                     receiver_lat=receiver_lat,
                     receiver_lon=receiver_lon,
+                    aircraft=aircraft,
                 )
                 entities = [sensor.to_entity(context, availability) for sensor in CATALOG]
                 device.set_entities(entities)

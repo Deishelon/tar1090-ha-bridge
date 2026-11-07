@@ -35,6 +35,8 @@ hexes itself.
 | Aircraft Without Position         | `aircraft_without_pos`                                 |
 | Aircraft ADS-B                    | `aircraft_count_by_type.adsb_icao`                     |
 | Aircraft Other Types              | every other `aircraft_count_by_type` entry             |
+| Closest Aircraft                  | nearest `aircraft.json` position, ground distance in km |
+| Closest Aircraft Bearing         | bearing from the receiver to that aircraft, degrees     |
 | Max Distance (24 h)               | farthest `outline.json` point from the receiver, in km |
 | Outline Max Altitude (24 h)       | highest altitude on those outline points, in ft        |
 | Aircraft Tracks (15 min)          | `last15min.tracks.all`                                 |
@@ -130,7 +132,9 @@ sudo systemctl restart tar1090-ha-bridge
 
 | Variable              | Description                                                      | Default                                     |
 |-----------------------|------------------------------------------------------------------|-----------------------------|
-| `TAR1090_BASE_URL`    | Directory with `stats.json`, `outline.json`, and `receiver.json` | `https://plane.home.deishelon.com/map/data` |
+| `TAR1090_BASE_URL`    | Directory with `stats.json`, `outline.json`, `receiver.json`, and `aircraft.json` | `https://plane.home.deishelon.com/map/data` |
+| `TAR1090_LAT`         | Receiver latitude, used only when `receiver.json` has no position                   |                                                 |
+| `TAR1090_LON`         | Receiver longitude, used only when `receiver.json` has no position                  |                                                 |
 | `TAR1090_TIMEOUT_SEC` | HTTP timeout                                                     | `10`                                        |
 | `POLL_INTERVAL_SEC`   | Seconds between polls                                            | `20`                                        |
 | `MQTT_BROKER`          | MQTT broker host                             | `localhost`                                            |
@@ -141,6 +145,8 @@ sudo systemctl restart tar1090-ha-bridge
 | `MQTT_HA_PREFIX`       | HA discovery prefix                          | `homeassistant`                                        |
 | `HA_DEVICE_ID_PREFIX`  | Prefix for the device id                     | `tar1090`                                              |
 | `HA_DEVICE_NAME`       | Device name in Home Assistant                | `tar1090`                                              |
+
+The receiver position comes from `receiver.json` `lat` and `lon`. `TAR1090_LAT` and `TAR1090_LON` are used only when that file has no position. Closest Aircraft uses readsb's `r_dst` when an aircraft has one, converted from nautical miles to kilometres. Otherwise it is the great-circle distance from the receiver position to the aircraft `lat`/`lon`. Closest Aircraft Bearing uses `r_dir` for that same aircraft: degrees clockwise from true north, where 0 is north and 90 is east. With no positioned aircraft, both sensors are cleared.
 
 Max Distance (24 h) is the great-circle distance from `receiver.json` lat/lon to the farthest point in `outline.json`.
 Outline Max Altitude (24 h) is the highest altitude stored on those points. readsb writes that file for the map outline,

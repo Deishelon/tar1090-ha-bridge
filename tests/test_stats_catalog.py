@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from stats_catalog import CATALOG, PollContext, format_state, haversine_km
+from stats_catalog import CATALOG, PollContext, bearing_degrees, format_state, haversine_km
 
 
 STATS = {
@@ -51,7 +51,16 @@ OUTLINE = {
 
 class StatsCatalogTest(unittest.TestCase):
     def context(self):
-        return PollContext(stats=STATS, outline=OUTLINE, receiver_lat=0.0, receiver_lon=0.0)
+        return PollContext(
+            stats=STATS,
+            outline=OUTLINE,
+            receiver_lat=0.0,
+            receiver_lon=0.0,
+            aircraft=[
+                {"r_dst": 10.0, "r_dir": 10.0},
+                {"hex": "abc", "r_dst": 3.0, "r_dir": 90.0},
+            ],
+        )
 
     def values(self):
         ctx = self.context()
@@ -77,7 +86,34 @@ class StatsCatalogTest(unittest.TestCase):
         self.assertEqual(values["samples_dropped_since_start"], 7)
         self.assertAlmostEqual(values["max_distance_24h"], haversine_km(0, 0, 0, 1), places=3)
         self.assertEqual(values["outline_max_altitude_24h"], 38000)
+        self.assertAlmostEqual(values["closest_aircraft"], 3 * 1.852)
+        self.assertEqual(values["closest_aircraft_bearing"], 90)
         self.assertTrue(all(value is not None for value in values.values()))
+
+    def test_closest_aircraft_uses_position_when_r_dst_is_missing(self):
+        ctx = PollContext(
+            stats=STATS,
+            receiver_lat=0.0,
+            receiver_lon=0.0,
+            aircraft=[
+                {"hex": "far", "lat": 0.0, "lon": 1.0},
+                {"hex": "near", "lat": 0.0, "lon": 0.2},
+                {"hex": "nopos"},
+            ],
+        )
+        distance = next(s for s in CATALOG if s.component_id == "closest_aircraft").extract(ctx)
+        bearing = next(s for s in CATALOG if s.component_id == "closest_aircraft_bearing").extract(ctx)
+        self.assertAlmostEqual(distance, haversine_km(0, 0, 0, 0.2), places=3)
+        self.assertAlmostEqual(bearing, bearing_degrees(0, 0, 0, 0.2), places=3)
+        self.assertAlmostEqual(bearing_degrees(0, 0, 0, 1), 90, places=3)
+        self.assertAlmostEqual(bearing_degrees(0, 0, 1, 0), 0, places=3)
+
+    def test_closest_aircraft_clears_when_none_have_a_position(self):
+        ctx = PollContext(stats=STATS, aircraft=[{"hex": "abc"}])
+        distance = next(s for s in CATALOG if s.component_id == "closest_aircraft").extract(ctx)
+        bearing = next(s for s in CATALOG if s.component_id == "closest_aircraft_bearing").extract(ctx)
+        self.assertEqual(distance, "")
+        self.assertEqual(bearing, "")
 
     def test_outline_distance_needs_receiver_position(self):
         ctx = PollContext(stats=STATS, outline=OUTLINE)
