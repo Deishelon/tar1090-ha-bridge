@@ -14,6 +14,8 @@ STATS = {
     "estimated_ppm": 10.25,
     "aircraft_count_by_type": {"adsb_icao": 2, "mode_s": 1, "mlat": 0},
     "last1min": {
+        "start": 0.0,
+        "end": 60.0,
         "messages": 37,
         "max_distance": 1000,
         "local": {"signal": -20.0, "noise": -36.0, "strong_signals": 2},
@@ -67,6 +69,7 @@ class StatsCatalogTest(unittest.TestCase):
         self.assertEqual(values["aircraft_other"], 1)
         self.assertEqual(values["tracks_15min"], 8)
         self.assertEqual(values["messages_1min"], 37)
+        self.assertAlmostEqual(values["messages_per_second"], 37 / 60)
         self.assertEqual(values["max_distance_15min"], 18.52)
         self.assertEqual(values["max_distance_since_start"], 37.04)
         self.assertEqual(values["receiver_uptime"], 3600)

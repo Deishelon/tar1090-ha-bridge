@@ -91,6 +91,18 @@ def signal_to_noise(ctx: PollContext):
     return float(signal) - float(noise)
 
 
+def messages_per_second(ctx: PollContext):
+    messages = as_number(dig(ctx.stats, "last1min.messages"))
+    start = as_number(dig(ctx.stats, "last1min.start"))
+    end = as_number(dig(ctx.stats, "last1min.end"))
+    if messages is None or start is None or end is None:
+        return None
+    window = float(end) - float(start)
+    if window <= 0:
+        return None
+    return float(messages) / window
+
+
 def receiver_uptime(ctx: PollContext):
     start = as_number(dig(ctx.stats, "total.start"))
     end = as_number(dig(ctx.stats, "total.end"))
@@ -245,6 +257,14 @@ CATALOG: list[SensorDef] = [
         name="Messages (1 min)",
         extract=number_at("last1min.messages"),
         icon="mdi:message-text",
+    ),
+    SensorDef(
+        component_id="messages_per_second",
+        name="Messages per Second",
+        extract=messages_per_second,
+        unit="messages/s",
+        precision=2,
+        icon="mdi:speedometer",
     ),
     SensorDef(
         component_id="messages_15min",

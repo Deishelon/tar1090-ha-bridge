@@ -39,6 +39,7 @@ hexes itself.
 | Outline Max Altitude (24 h)       | highest altitude on those outline points, in ft        |
 | Aircraft Tracks (15 min)          | `last15min.tracks.all`                                 |
 | Messages (1 min) / (15 min)       | `last1min.messages`, `last15min.messages`              |
+| Messages per Second               | `last1min.messages` divided by that window's length    |
 | Max Distance (15 min)             | `last15min.max_distance`, published in km              |
 | Aircraft Tracks Since Start       | `total.tracks.all`                                     |
 | Messages Since Start              | `total.messages`                                       |
