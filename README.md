@@ -8,6 +8,12 @@ an MQTT broker using [Home Assistant MQTT discovery](https://www.home-assistant.
 The layout matches [powerwall-ha-bridge](https://github.com/Deishelon/powerwall-ha-bridge): one Home Assistant device,
 one MQTT discovery payload, and a catalog of sensors you can extend.
 
+
+| Zoomed in                                                                                               |
+|---------------------------------------------------------------------------------------------------------|
+| ![Example HA Dashboard](assets/demo1.png) |
+
+
 ## Features
 
 - **Aircraft now**: total, with position, without position, ADS-B, and every other type summed together.
