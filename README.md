@@ -8,11 +8,19 @@ an MQTT broker using [Home Assistant MQTT discovery](https://www.home-assistant.
 The layout matches [powerwall-ha-bridge](https://github.com/Deishelon/powerwall-ha-bridge): one Home Assistant device,
 one MQTT discovery payload, and a catalog of sensors you can extend.
 
-
-| Example dashboard                                                                                               |
-|---------------------------------------------------------------------------------------------------------|
+| Example dashboard                         |
+|-------------------------------------------|
 | ![Example HA Dashboard](assets/demo1.png) |
 
+## Radar card
+
+This bridge publishes the summary sensors. For a live map of every aircraft on the dashboard, use
+the [tar1090 radar card](https://github.com/Deishelon/tar1090-ha-radar-card). It reads `aircraft.json` and
+`receiver.json` in the browser. It does not use this MQTT bridge. Install steps are in that repo.
+
+| Zoomed in                                                                                                                                     | Zoomed out                                                                                                                                     |
+|-----------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| ![Radar card zoomed in, with range rings and aircraft labels](https://github.com/Deishelon/tar1090-ha-radar-card/raw/master/assets/demo1.png) | ![Radar card zoomed out, with more of the range rings visible](https://github.com/Deishelon/tar1090-ha-radar-card/raw/master/assets/demo2.png) |
 
 ## Features
 
@@ -34,32 +42,32 @@ hexes itself.
 
 ## Sensors
 
-| Sensor                            | Source                                                 |
-|-----------------------------------|--------------------------------------------------------|
-| Aircraft Now                      | `aircraft_with_pos` + `aircraft_without_pos`           |
-| Aircraft With Position            | `aircraft_with_pos`                                    |
-| Aircraft Without Position         | `aircraft_without_pos`                                 |
-| Aircraft ADS-B                    | `aircraft_count_by_type.adsb_icao`                     |
-| Aircraft Other Types              | every other `aircraft_count_by_type` entry             |
+| Sensor                            | Source                                                  |
+|-----------------------------------|---------------------------------------------------------|
+| Aircraft Now                      | `aircraft_with_pos` + `aircraft_without_pos`            |
+| Aircraft With Position            | `aircraft_with_pos`                                     |
+| Aircraft Without Position         | `aircraft_without_pos`                                  |
+| Aircraft ADS-B                    | `aircraft_count_by_type.adsb_icao`                      |
+| Aircraft Other Types              | every other `aircraft_count_by_type` entry              |
 | Closest Aircraft                  | nearest `aircraft.json` position, ground distance in km |
-| Closest Aircraft Bearing         | bearing from the receiver to that aircraft, degrees     |
-| Max Distance (24 h)               | farthest `outline.json` point from the receiver, in km |
-| Outline Max Altitude (24 h)       | highest altitude on those outline points, in m         |
-| Aircraft Tracks (15 min)          | `last15min.tracks.all`                                 |
-| Messages (1 min) / (15 min)       | `last1min.messages`, `last15min.messages`              |
-| Messages per Second               | `last1min.messages` divided by that window's length    |
-| Max Distance (15 min)             | `last15min.max_distance`, published in km              |
-| Aircraft Tracks Since Start       | `total.tracks.all`                                     |
-| Messages Since Start              | `total.messages`                                       |
-| Positions Since Start             | `total.position_count_total`                           |
-| Max Distance Since Start          | `total.max_distance`, published in km                  |
-| Receiver Uptime                   | `total.end - total.start`, seconds                     |
-| Single Message Tracks Since Start | `total.tracks.single_message`                          |
-| Signal / Noise / SNR (1 min)      | `last1min.local.signal` and `noise`                    |
-| Tuner Gain                        | `gain_db`                                              |
-| Frequency Error                   | `estimated_ppm`                                        |
-| Strong Signals (1 min)            | `last1min.local.strong_signals`                        |
-| Samples Dropped Since Start       | `total.local.samples_dropped`                          |
+| Closest Aircraft Bearing          | bearing from the receiver to that aircraft, degrees     |
+| Max Distance (24 h)               | farthest `outline.json` point from the receiver, in km  |
+| Outline Max Altitude (24 h)       | highest altitude on those outline points, in m          |
+| Aircraft Tracks (15 min)          | `last15min.tracks.all`                                  |
+| Messages (1 min) / (15 min)       | `last1min.messages`, `last15min.messages`               |
+| Messages per Second               | `last1min.messages` divided by that window's length     |
+| Max Distance (15 min)             | `last15min.max_distance`, published in km               |
+| Aircraft Tracks Since Start       | `total.tracks.all`                                      |
+| Messages Since Start              | `total.messages`                                        |
+| Positions Since Start             | `total.position_count_total`                            |
+| Max Distance Since Start          | `total.max_distance`, published in km                   |
+| Receiver Uptime                   | `total.end - total.start`, seconds                      |
+| Single Message Tracks Since Start | `total.tracks.single_message`                           |
+| Signal / Noise / SNR (1 min)      | `last1min.local.signal` and `noise`                     |
+| Tuner Gain                        | `gain_db`                                               |
+| Frequency Error                   | `estimated_ppm`                                         |
+| Strong Signals (1 min)            | `last1min.local.strong_signals`                         |
+| Samples Dropped Since Start       | `total.local.samples_dropped`                           |
 
 Signal, noise, gain, and the other receiver counters are Home Assistant diagnostic entities.
 
@@ -76,14 +84,18 @@ pip install -r src/requirements.txt
 cp .env.example .env
 ```
 
-Edit `.env` and set `MQTT_BROKER` to a broker you can reach. The copied example uses `localhost`. The default `TAR1090_BASE_URL` is `https://plane.home.deishelon.com/map/data`.
+Edit `.env` and set `MQTT_BROKER` to a broker you can reach. The copied example uses `localhost`. The default
+`TAR1090_BASE_URL` is `https://plane.home.deishelon.com/map/data`.
 
 ```bash
 python src/main.py
 python src/main.py /path/to/other.env
 ```
 
-With no argument, the script loads `.env` from the repo root when that file exists. A path argument is the env file to load, absolute or relative to the working directory, and values in that file replace variables already set in the process. The log line `Loaded env file ...` is the file that was used. The next line is the MQTT host it will connect to.
+With no argument, the script loads `.env` from the repo root when that file exists. A path argument is the env file to
+load, absolute or relative to the working directory, and values in that file replace variables already set in the
+process. The log line `Loaded env file ...` is the file that was used. The next line is the MQTT host it will connect
+to.
 
 In PyCharm, open the `src/main.py` run configuration and put the env file in **Script parameters**:
 
@@ -91,7 +103,8 @@ In PyCharm, open the `src/main.py` run configuration and put the env file in **S
 /home/deishelon/PycharmProjects/tar1090-ha-bridge/.env
 ```
 
-Logs go to the terminal. Stop the process with Ctrl-C. Each poll logs how many entities it published. The process only talks to the tar1090 URLs and the MQTT broker. It does not configure Home Assistant.
+Logs go to the terminal. Stop the process with Ctrl-C. Each poll logs how many entities it published. The process only
+talks to the tar1090 URLs and the MQTT broker. It does not configure Home Assistant.
 
 Run the tests with:
 
@@ -113,7 +126,9 @@ sudo systemctl start tar1090-ha-bridge
 python src/main.py /path/to/this/repo/.env
 ```
 
-That is the same env-file argument as a local run. The unit does not use systemd `EnvironmentFile`, so the file is parsed only by the script. `install.sh` creates `venv`, installs Python dependencies, writes `.env` from `.env.example` when `.env` is missing, and installs the unit. It does not start the service.
+That is the same env-file argument as a local run. The unit does not use systemd `EnvironmentFile`, so the file is
+parsed only by the script. `install.sh` creates `venv`, installs Python dependencies, writes `.env` from `.env.example`
+when `.env` is missing, and installs the unit. It does not start the service.
 
 If the unit was installed before this change, run `./install.sh` again, then:
 
@@ -136,26 +151,31 @@ sudo systemctl restart tar1090-ha-bridge
 
 ## Configuration
 
-| Variable              | Description                                                      | Default                                     |
-|-----------------------|------------------------------------------------------------------|-----------------------------|
+| Variable              | Description                                                                       | Default                                     |
+|-----------------------|-----------------------------------------------------------------------------------|---------------------------------------------|
 | `TAR1090_BASE_URL`    | Directory with `stats.json`, `outline.json`, `receiver.json`, and `aircraft.json` | `https://plane.home.deishelon.com/map/data` |
-| `TAR1090_LAT`         | Receiver latitude, used only when `receiver.json` has no position                   |                                                 |
-| `TAR1090_LON`         | Receiver longitude, used only when `receiver.json` has no position                  |                                                 |
-| `TAR1090_TIMEOUT_SEC` | HTTP timeout                                                     | `10`                                        |
-| `POLL_INTERVAL_SEC`   | Seconds between polls                                            | `20`                                        |
-| `MQTT_BROKER`          | MQTT broker host                             | `localhost`                                            |
-| `MQTT_PORT`            | MQTT port                                    | `1883`                                                 |
-| `MQTT_USERNAME`        | MQTT username                                |                                                        |
-| `MQTT_PASSWORD`        | MQTT password                                |                                                        |
-| `MQTT_CLIENT_ID`       | MQTT client ID                               | `tar1090-ha-bridge`                                    |
-| `MQTT_HA_PREFIX`       | HA discovery prefix                          | `homeassistant`                                        |
-| `HA_DEVICE_ID_PREFIX`  | Prefix for the device id                     | `tar1090`                                              |
-| `HA_DEVICE_NAME`       | Device name in Home Assistant                | `tar1090`                                              |
+| `TAR1090_LAT`         | Receiver latitude, used only when `receiver.json` has no position                 |                                             |
+| `TAR1090_LON`         | Receiver longitude, used only when `receiver.json` has no position                |                                             |
+| `TAR1090_TIMEOUT_SEC` | HTTP timeout                                                                      | `10`                                        |
+| `POLL_INTERVAL_SEC`   | Seconds between polls                                                             | `20`                                        |
+| `MQTT_BROKER`         | MQTT broker host                                                                  | `localhost`                                 |
+| `MQTT_PORT`           | MQTT port                                                                         | `1883`                                      |
+| `MQTT_USERNAME`       | MQTT username                                                                     |                                             |
+| `MQTT_PASSWORD`       | MQTT password                                                                     |                                             |
+| `MQTT_CLIENT_ID`      | MQTT client ID                                                                    | `tar1090-ha-bridge`                         |
+| `MQTT_HA_PREFIX`      | HA discovery prefix                                                               | `homeassistant`                             |
+| `HA_DEVICE_ID_PREFIX` | Prefix for the device id                                                          | `tar1090`                                   |
+| `HA_DEVICE_NAME`      | Device name in Home Assistant                                                     | `tar1090`                                   |
 
-The receiver position comes from `receiver.json` `lat` and `lon`. `TAR1090_LAT` and `TAR1090_LON` are used only when that file has no position. Closest Aircraft uses readsb's `r_dst` when an aircraft has one, converted from nautical miles to kilometres. Otherwise it is the great-circle distance from the receiver position to the aircraft `lat`/`lon`. Closest Aircraft Bearing uses `r_dir` for that same aircraft: degrees clockwise from true north, where 0 is north and 90 is east. With no positioned aircraft, both sensors are cleared.
+The receiver position comes from `receiver.json` `lat` and `lon`. `TAR1090_LAT` and `TAR1090_LON` are used only when
+that file has no position. Closest Aircraft uses readsb's `r_dst` when an aircraft has one, converted from nautical
+miles to kilometres. Otherwise it is the great-circle distance from the receiver position to the aircraft `lat`/`lon`.
+Closest Aircraft Bearing uses `r_dir` for that same aircraft: degrees clockwise from true north, where 0 is north and 90
+is east. With no positioned aircraft, both sensors are cleared.
 
 Max Distance (24 h) is the great-circle distance from `receiver.json` lat/lon to the farthest point in `outline.json`.
-Outline Max Altitude (24 h) is the highest altitude stored on those points, converted from feet to metres. readsb writes that file for the map outline,
+Outline Max Altitude (24 h) is the highest altitude stored on those points, converted from feet to metres. readsb writes
+that file for the map outline,
 using a 24 hour window by default.
 
 ## Home Assistant Setup
