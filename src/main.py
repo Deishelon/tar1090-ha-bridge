@@ -50,7 +50,7 @@ def resolve_env_path(argv: list[str]) -> Path | None:
     return None
 
 
-DEFAULT_BASE_URL = "https://plane.home.deishelon.com/map/data"
+DEFAULT_BASE_URL = "http://tar1090.local/data"
 
 
 def data_url(base_url: str, filename: str) -> str:

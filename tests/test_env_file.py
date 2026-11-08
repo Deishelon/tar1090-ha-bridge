@@ -11,7 +11,7 @@ from main import data_url, load_env_file, resolve_env_path
 
 class DataUrlTest(unittest.TestCase):
     def test_joins_the_data_directory(self):
-        base = "https://plane.home.deishelon.com/map/data"
+        base = "http://tar1090.local/data"
         self.assertEqual(data_url(base, "stats.json"), base + "/stats.json")
         self.assertEqual(data_url(base + "/", "outline.json"), base + "/outline.json")
 

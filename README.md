@@ -85,7 +85,8 @@ cp .env.example .env
 ```
 
 Edit `.env` and set `MQTT_BROKER` to a broker you can reach. The copied example uses `localhost`. The default
-`TAR1090_BASE_URL` is `https://plane.home.deishelon.com/map/data`.
+`TAR1090_BASE_URL` is `http://tar1090.local/data`. Point it at the directory on your receiver that contains
+`stats.json`.
 
 ```bash
 python src/main.py
@@ -100,7 +101,7 @@ to.
 In PyCharm, open the `src/main.py` run configuration and put the env file in **Script parameters**:
 
 ```text
-/home/deishelon/PycharmProjects/tar1090-ha-bridge/.env
+/path/to/tar1090-ha-bridge/.env
 ```
 
 Logs go to the terminal. Stop the process with Ctrl-C. Each poll logs how many entities it published. The process only
@@ -153,7 +154,7 @@ sudo systemctl restart tar1090-ha-bridge
 
 | Variable              | Description                                                                       | Default                                     |
 |-----------------------|-----------------------------------------------------------------------------------|---------------------------------------------|
-| `TAR1090_BASE_URL`    | Directory with `stats.json`, `outline.json`, `receiver.json`, and `aircraft.json` | `https://plane.home.deishelon.com/map/data` |
+| `TAR1090_BASE_URL`    | Directory with `stats.json`, `outline.json`, `receiver.json`, and `aircraft.json` | `http://tar1090.local/data` |
 | `TAR1090_LAT`         | Receiver latitude, used only when `receiver.json` has no position                 |                                             |
 | `TAR1090_LON`         | Receiver longitude, used only when `receiver.json` has no position                |                                             |
 | `TAR1090_TIMEOUT_SEC` | HTTP timeout                                                                      | `10`                                        |
