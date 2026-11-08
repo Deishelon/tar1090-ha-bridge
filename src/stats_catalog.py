@@ -19,6 +19,7 @@ class PollContext:
     receiver_lat: float | None = None
     receiver_lon: float | None = None
     aircraft: list | None = None
+    aircraft_today: int | None = None
 
 
 def dig(data: dict, dotted: str):
@@ -53,6 +54,10 @@ def kilometers_at(dotted: str) -> Callable[[PollContext], float | None]:
         return float(meters) / 1000.0
 
     return extract
+
+
+def aircraft_today_count(ctx: PollContext):
+    return ctx.aircraft_today
 
 
 def aircraft_now(ctx: PollContext):
@@ -286,6 +291,12 @@ CATALOG: list[SensorDef] = [
         name="Aircraft Now",
         extract=aircraft_now,
         icon="mdi:airplane",
+    ),
+    SensorDef(
+        component_id="aircraft_today",
+        name="Aircraft Today",
+        extract=aircraft_today_count,
+        icon="mdi:airplane-clock",
     ),
     SensorDef(
         component_id="aircraft_with_position",

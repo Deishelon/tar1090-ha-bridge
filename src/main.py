@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 from urllib.parse import urlparse
 
+from daily_aircraft import DailyAircraftTracker, resolve_timezone
 from ha_device import HaDevice
 from http_json import fetch_json
 from mqtt_paho import MqttClient
@@ -76,6 +77,16 @@ def receiver_model(receiver: dict | None) -> str | None:
     if isinstance(version, str) and version.strip():
         return version.strip()
     return None
+
+
+def aircraft_today_state_path() -> Path:
+    raw = os.getenv("AIRCRAFT_TODAY_STATE", "").strip()
+    if not raw:
+        return REPO_ROOT / "data" / "aircraft_today.json"
+    path = Path(raw).expanduser()
+    if not path.is_absolute():
+        path = Path.cwd() / path
+    return path
 
 
 def receiver_position(receiver: dict | None) -> tuple[float | None, float | None]:
@@ -169,6 +180,10 @@ async def run(argv: list[str] | None = None):
     password = os.getenv("MQTT_PASSWORD") or None
     fallback_lat = env_coordinate("TAR1090_LAT", -90, 90)
     fallback_lon = env_coordinate("TAR1090_LON", -180, 180)
+    aircraft_today = DailyAircraftTracker(
+        aircraft_today_state_path(),
+        tz=resolve_timezone(os.getenv("AIRCRAFT_TODAY_TZ")),
+    )
 
     try:
         mqtt = MqttClient(broker, port, client_id, username, password, will_topic=availability)
@@ -222,6 +237,10 @@ async def run(argv: list[str] | None = None):
                         aircraft = raw_aircraft
                     else:
                         logger.warning("aircraft.json did not contain an aircraft list")
+                if aircraft is not None:
+                    aircraft_today.observe(aircraft)
+                else:
+                    aircraft_today.roll()
 
                 context = PollContext(
                     stats=stats,
@@ -229,6 +248,7 @@ async def run(argv: list[str] | None = None):
                     receiver_lat=receiver_lat,
                     receiver_lon=receiver_lon,
                     aircraft=aircraft,
+                    aircraft_today=aircraft_today.count,
                 )
                 entities = [sensor.to_entity(context, availability) for sensor in CATALOG]
                 device.set_entities(entities)

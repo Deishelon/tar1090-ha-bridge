@@ -19,6 +19,14 @@ views:
         tap_action:
           action: more-info
       - type: custom:mushroom-template-badge
+        entity: sensor.tar1090_aircraft_today
+        icon: mdi:airplane-clock
+        color: green
+        label: Today
+        content: "{{ states('sensor.tar1090_aircraft_today') }}"
+        tap_action:
+          action: more-info
+      - type: custom:mushroom-template-badge
         entity: sensor.tar1090_closest_aircraft
         icon: mdi:map-marker-radius
         color: amber
@@ -74,6 +82,14 @@ views:
             primary: "{{ states('sensor.tar1090_aircraft_now') }}"
             secondary: Aircraft now
             icon: mdi:airplane
+            icon_color: green
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            entity: sensor.tar1090_aircraft_today
+            primary: "{{ states('sensor.tar1090_aircraft_today') }}"
+            secondary: Unique aircraft since midnight
+            icon: mdi:airplane-clock
             icon_color: green
             tap_action:
               action: more-info

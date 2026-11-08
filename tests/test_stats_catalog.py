@@ -60,6 +60,7 @@ class StatsCatalogTest(unittest.TestCase):
                 {"r_dst": 10.0, "r_dir": 10.0},
                 {"hex": "abc", "r_dst": 3.0, "r_dir": 90.0},
             ],
+            aircraft_today=2,
         )
 
     def values(self):
@@ -73,6 +74,7 @@ class StatsCatalogTest(unittest.TestCase):
     def test_snapshot_values(self):
         values = self.values()
         self.assertEqual(values["aircraft_now"], 3)
+        self.assertEqual(values["aircraft_today"], 2)
         self.assertEqual(values["aircraft_with_position"], 2)
         self.assertEqual(values["aircraft_adsb_icao"], 2)
         self.assertEqual(values["aircraft_other"], 1)
@@ -107,6 +109,11 @@ class StatsCatalogTest(unittest.TestCase):
         self.assertAlmostEqual(bearing, bearing_degrees(0, 0, 0, 0.2), places=3)
         self.assertAlmostEqual(bearing_degrees(0, 0, 0, 1), 90, places=3)
         self.assertAlmostEqual(bearing_degrees(0, 0, 1, 0), 0, places=3)
+
+    def test_aircraft_today_is_empty_until_the_tracker_fills_it(self):
+        ctx = PollContext(stats=STATS, aircraft=[{"hex": "abc"}])
+        value = next(s for s in CATALOG if s.component_id == "aircraft_today").extract(ctx)
+        self.assertIsNone(value)
 
     def test_closest_aircraft_clears_when_none_have_a_position(self):
         ctx = PollContext(stats=STATS, aircraft=[{"hex": "abc"}])

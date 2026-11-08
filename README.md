@@ -25,6 +25,7 @@ the [tar1090 radar card](https://github.com/Deishelon/tar1090-ha-radar-card). It
 ## Features
 
 - **Aircraft now**: total, with position, without position, ADS-B, and every other type summed together.
+- **Aircraft today**: distinct aircraft seen since local midnight. The count resets at midnight and survives a bridge restart.
 - **Recent window**: messages, tracks, and max distance from the readsb 1 minute and 15 minute buckets.
 - **Since readsb start**: messages, positions, tracks, max distance, uptime, dropped samples.
 - **24 h outline**: farthest contact and highest outline altitude from `outline.json`, which readsb keeps on the
@@ -37,14 +38,19 @@ started. The rolling 24 hour figure in this bridge comes from `outline.json` (`a
 maintains. Restarting the bridge does not clear it.
 
 `tracks.all` counts tracks. A track ends about 5 minutes after the last message, and the same aircraft can open another
-track later. None of the tar1090 JSON files publish a unique aircraft total for 24 hours, so this bridge does not count
-hexes itself.
+track later. None of the tar1090 JSON files publish a unique aircraft total for a calendar day.
+
+Aircraft Today counts distinct `hex` values from `aircraft.json` since local midnight. The bridge stores them in
+`data/aircraft_today.json` (or `AIRCRAFT_TODAY_STATE`) and clears that set at midnight. Midnight follows the machine
+timezone unless `AIRCRAFT_TODAY_TZ` is set. A contact that appears and disappears between polls can be missed. Restarting
+the bridge does not clear the day's count. Restarting readsb does not clear it either.
 
 ## Sensors
 
 | Sensor                            | Source                                                  |
 |-----------------------------------|---------------------------------------------------------|
 | Aircraft Now                      | `aircraft_with_pos` + `aircraft_without_pos`            |
+| Aircraft Today                    | distinct `aircraft.json` hexes since local midnight     |
 | Aircraft With Position            | `aircraft_with_pos`                                     |
 | Aircraft Without Position         | `aircraft_without_pos`                                  |
 | Aircraft ADS-B                    | `aircraft_count_by_type.adsb_icao`                      |
@@ -159,6 +165,8 @@ sudo systemctl restart tar1090-ha-bridge
 | `TAR1090_LON`         | Receiver longitude, used only when `receiver.json` has no position                |                                             |
 | `TAR1090_TIMEOUT_SEC` | HTTP timeout                                                                      | `10`                                        |
 | `POLL_INTERVAL_SEC`   | Seconds between polls                                                             | `20`                                        |
+| `AIRCRAFT_TODAY_STATE`| File of aircraft hexes seen since midnight                                        | `data/aircraft_today.json`                  |
+| `AIRCRAFT_TODAY_TZ`   | Timezone for the midnight reset                                                   | machine local timezone                      |
 | `MQTT_BROKER`         | MQTT broker host                                                                  | `localhost`                                 |
 | `MQTT_PORT`           | MQTT port                                                                         | `1883`                                      |
 | `MQTT_USERNAME`       | MQTT username                                                                     |                                             |
@@ -173,6 +181,10 @@ that file has no position. Closest Aircraft uses readsb's `r_dst` when an aircra
 miles to kilometres. Otherwise it is the great-circle distance from the receiver position to the aircraft `lat`/`lon`.
 Closest Aircraft Bearing uses `r_dir` for that same aircraft: degrees clockwise from true north, where 0 is north and 90
 is east. With no positioned aircraft, both sensors are cleared.
+
+Aircraft Today is a count of aircraft, not tracks. The same hex is counted once until local midnight, including aircraft
+that have no position. The reset uses `AIRCRAFT_TODAY_TZ` when it is set, and otherwise the timezone of the machine
+running the bridge.
 
 Max Distance (24 h) is the great-circle distance from `receiver.json` lat/lon to the farthest point in `outline.json`.
 Outline Max Altitude (24 h) is the highest altitude stored on those points, converted from feet to metres. readsb writes
