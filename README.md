@@ -9,7 +9,7 @@ The layout matches [powerwall-ha-bridge](https://github.com/Deishelon/powerwall-
 one MQTT discovery payload, and a catalog of sensors you can extend.
 
 
-| Zoomed in                                                                                               |
+| Example dashboard                                                                                               |
 |---------------------------------------------------------------------------------------------------------|
 | ![Example HA Dashboard](assets/demo1.png) |
 
