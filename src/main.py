@@ -16,7 +16,7 @@ from stats_catalog import CATALOG, PollContext, as_number, format_state
 
 logger = logging.getLogger("tar1090-ha-bridge")
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DISCOVERY_INTERVAL_SEC = 600
+DISCOVERY_INTERVAL_SEC = 30
 
 
 def load_env_file(path: Path, override: bool = False):
